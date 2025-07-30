@@ -2,51 +2,69 @@ import torch
 from torch import nn
 import torchvision
 from torch.utils.data import Dataset
-from torch.utils.data import dataloader
+from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt 
 
 
 
-class example (nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class data_preparation():
+    def __init__(self):
+        self.data_prepare() 
+    
+    
+    def data_prepare(self):
         
-
-class data:
-    def load_data(self):
-        self.Traning_data_set =torchvision.datasets.CIFAR10(root="data",
-                                                            train=True,
-                                                        transform=ToTensor(),
-                                                        download=True,
-                                                        target_transform=None)
+        self.training_data_prepare = torchvision.datasets.CIFAR10(root="data",
+                                                             train=True,
+                                                             transform=ToTensor(),
+                                                             target_transform=None)
         
-        self.Test_data_set = torchvision.datasets.CIFAR10(root="data",
-                                                          train=False,
-                                                          download=True,
-                                                          transform=ToTensor(),
-                                                          target_transform=None)
-        # class_names = self.Traning_data_set.class_to_idx
-        self.class_name = self.Traning_data_set.classes
-        classes_index = self.Traning_data_set.class_to_idx
-        print(classes_index)
-        return self.Traning_data_set
+        self.test_data_prepare = torchvision.datasets.CIFAR10(root="data",
+                                                         train=False,
+                                                         transform=ToTensor(),
+                                                         target_transform=None)
         
-    def visulization(self,row,column):
-        self.no_row = row
-        self.no_column = column
-        self.load_data()
-        plt.figure(figsize=(10,10))
-       
+        self.class_name_index = self.training_data_prepare.class_to_idx
         
-        for i in range(1,self.no_column*self.no_column+1):
-            image,label = self.Traning_data_set[torch.randint(0,len(self.Traning_data_set),(1,)).item()]
-            plt.subplot(row,column,i)
-             
-            # plt.imshow(image.squeeze())
-            plt.imshow(image.permute(1, 2, 0)) 
-            
-            
-        plt.show()
         
+        # for i in range(8):
+        #     random_image = torch.randint(0,len(self.training_data_prepare),(1,)).item()
+        #     image,label = self.training_data_prepare[random_image]
+        #     plt.subplot(4,4,i+1)
+        #     plt.imshow(image.permute(1,2,0))
+        #     plt.title(self.class_name_index[label])
+        #     plt.tight_layout()
+        #     plt.axis("off")
+        # plt.show()
+        
+        
+        
+    def data_loader(self):
+        self.train_data_ready = DataLoader(dataset=self.training_data_prepare,
+                                       batch_size=32,
+                                       shuffle=True,
+                                       drop_last=False)
+        
+        self.test_data_ready = DataLoader(dataset=self.test_data_prepare,
+                                     batch_size=32,
+                                     shuffle=True,
+                                     drop_last=True)
+        
+        
+        # image,label = next(iter(self.train_data_ready))
+        # for i in range(32):
+        #     img = image[i]
+        #     plt.subplot(4,8,i+1)
+        #     plt.imshow(img.permute(1,2,0))
+        #     plt.title(self.class_name_index[label[i]])
+        #     plt.tight_layout()
+        #     plt.axis("off")
+        # plt.show()
+        
+if __name__ == "__main__":
+    
+    trail_1 = data_preparation()
+    # Image_show = trail_1.data_prepare()
+    
