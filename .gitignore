@@ -3,3 +3,4 @@ data/*
 vision/
 download/
 vision_env/
+echo vision_env/
