@@ -4,3 +4,23 @@ vision/
 download/
 vision_env/
 echo vision_env/
+
+# venvs
+vision_env/
+.venv/
+venv/
+env/
+
+# datasets & big files
+data/
+datasets/
+*.pt
+*.pth
+*.npy
+*.npz
+*.zip
+*.tar.gz
+
+# Python cache
+__pycache__/
+*.pyc
