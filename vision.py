@@ -93,8 +93,8 @@ class Data_prepare():
 class Trainer:
     def __init__(self,model,data,traning_epoch):
         
-        self.device = torch.device("cuda")
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cuda")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.device)
         self.data = data
        
@@ -109,8 +109,8 @@ class Trainer:
         
         
         
-        self.traning_loop()
-        self.evulation()
+        # self.traning_loop()
+        # self.evulation()
         # self.accuracy_check()
     
        
@@ -169,11 +169,11 @@ class Trainer:
         
         self.test_time_start = timer()
         
-        _ , test_batch_loaded = self.data.data_loading()
+        _ , self.test_batch_loaded = self.data.data_loading()
         
         with torch.inference_mode():
             
-            for Actual_data_X_test ,Actual_label_Y_test in test_batch_loaded:
+            for Actual_data_X_test ,Actual_label_Y_test in self.test_batch_loaded:
                 
                 testing_model_prediction_Y = self.model(Actual_data_X_test)
                 
@@ -187,13 +187,13 @@ class Trainer:
                 initial_test_accuracy += test_accuracy
         # Test_loss_average 
         
-            self.test_loss = initial_test_loss/len(test_batch_loaded)   
+            self.test_loss = initial_test_loss/len(self.test_batch_loaded)   
         
             # self.initial_test_loss/= len(test_batch_loaded)
             
         #Test_loss and accuracy 
         
-            self.test_accuracy= initial_test_accuracy/ len(test_batch_loaded)
+            self.test_accuracy= initial_test_accuracy/ len(self.test_batch_loaded)
             
             
         
@@ -215,7 +215,33 @@ class Trainer:
     def timing(self, start_time,end_time):
         # start_time = timer()
         # end_time = timer()
-        print(f"Total time = {end_time-start_time:.2f} on device {self.device} seconds ")
+        print(f"Total time = {(end_time-start_time)/60:.2f} on device {self.device} seconds ")
+        
+        
+    def eval_model(self):
+        
+        loss = 0
+        accuracy =0
+        
+        # _test_data_loaded = self.data.data_loading()
+        _,test_batch_loaded = self.data.data_loading()
+        
+        self.model.eval()
+        with torch.inference_mode():
+            for X,Y in test_batch_loaded:
+                model_prediction_y = self.model(X)
+                
+                loss += self.loss_function(model_prediction_y,Y)
+                accuracy += self.accuracy_check(Y_labels=Y,
+                                                Model_output=model_prediction_y.argmax(dim=1))
+                
+                loss /= len(self.data.data_loading())
+                accuracy /= len(self.data.data_loading())
+                
+        return {"MOdel_name = " :self.model.__class__.__name__,"model_ NAme" :loss.item(),
+                "model_accuracy":accuracy}
+            
+        
     
     
     
@@ -228,7 +254,9 @@ trail_x = Trainer(model=Model_image(input_shape=3*32*32,
                   
                   data= Data_prepare(batch_size=32),
                   
-                  traning_epoch=10)
+                  traning_epoch=1)
+
+print(trail_x.eval_model())
 
 print(torch.cuda.is_available())
 print(torch.version.cuda )
