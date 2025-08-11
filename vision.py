@@ -21,13 +21,16 @@ class Model_image(nn.Module):
         
         self.Linear_1 = nn.Linear(in_features=input_shape,
                                   out_features= hidden_shape)
+        non_linear_1 = nn.ReLU()
         
         self.Linear_2 = nn.Linear(in_features=hidden_shape,
                                   out_features=output_shape
                                   )
+        # non_linear_2 = nn.ReLU()
         
         self.model = nn.Sequential(self.flattern,
                                    self.Linear_1,
+                                   non_linear_1,
                                    self.Linear_2)
         
     def forward (self,x):
@@ -93,8 +96,8 @@ class Data_prepare():
 class Trainer:
     def __init__(self,model,data,traning_epoch):
         
-        # self.device = torch.device("cuda")
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda")
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.device)
         self.data = data
        
@@ -109,8 +112,8 @@ class Trainer:
         
         
         
-        # self.traning_loop()
-        # self.evulation()
+        self.traning_loop()
+        self.evulation()
         # self.accuracy_check()
     
        
@@ -124,9 +127,23 @@ class Trainer:
         correct = torch.eq(Y_labels,Model_output).sum().item()
         accuracy= (correct/len(Model_output))*100
         return accuracy   
+
+
+    def curves(self,x_axis,y_axis,x_label,y_label):
+        plt.figure(figsize=(10,5))
+        plt.plot(x_axis,y_axis,)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.tight_layout()
+        plt.show()
+    
+    
     
     def traning_loop(self):
-    
+
+        self.train_loss_storage = []
+        # to_numpy  = ToTensor.to_numpy
+
         torch.manual_seed(42)
         # self.train_loss = 0
         self.traning_time_start = timer()
@@ -141,6 +158,9 @@ class Trainer:
             for batch,(Actual_data_X_train,Actual_label_Y_train)in enumerate(traning_batch_loaded):
                 self.model.train()
                 
+                Actual_data_X_train = Actual_data_X_train.to(self.device,non_blocking=True)
+                Actual_label_Y_train = Actual_label_Y_train.to(self.device,non_blocking=True)
+                
                 traning_model_prediction_Y = self.model(Actual_data_X_train)
                 
                 train_loss = self.loss_function(traning_model_prediction_Y, Actual_label_Y_train)
@@ -153,10 +173,15 @@ class Trainer:
             
                 if batch % 100 ==0:
                     print(f"Looked at {batch*len(Actual_data_X_train)}/{len(traning_batch_loaded)} samples ")
-            
-            
+
+                    print(f"{train_loss:.2f} at batch {batch}")  
+                    
+            self.train_loss_storage.append(train_loss.item())
+
             self.train_loss = initial_loss/len(traning_batch_loaded)
             # self.train_loss /= len(traning_batch_loaded)
+            
+            
             
         self.traning_time_stop = timer()
         
@@ -174,6 +199,9 @@ class Trainer:
         with torch.inference_mode():
             
             for Actual_data_X_test ,Actual_label_Y_test in self.test_batch_loaded:
+                
+                Actual_data_X_test = Actual_data_X_test.to(self.device,non_blocking=True)   
+                Actual_label_Y_test = Actual_label_Y_test.to(self.device,non_blocking=True) 
                 
                 testing_model_prediction_Y = self.model(Actual_data_X_test)
                 
@@ -208,9 +236,12 @@ class Trainer:
                                         end_time = self.test_time_stop)
         
         print(f"The model time during traning {timing_print_train} and model time for evulation {timing_print_test}")
-        
-    
-    
+
+
+        epoch_graph = list(range(1,self.traning_epoch+1))
+        self.curves(x_axis=epoch_graph,y_axis=self.train_loss_storage,x_label="Epochs",y_label="Train Loss")
+
+
     # @staticmethod
     def timing(self, start_time,end_time):
         # start_time = timer()
@@ -229,14 +260,18 @@ class Trainer:
         self.model.eval()
         with torch.inference_mode():
             for X,Y in test_batch_loaded:
+                
+                
+                X = X.to(self.device,non_blocking=True)
+                Y = Y.to(self.device,non_blocking=True)
                 model_prediction_y = self.model(X)
                 
                 loss += self.loss_function(model_prediction_y,Y)
                 accuracy += self.accuracy_check(Y_labels=Y,
                                                 Model_output=model_prediction_y.argmax(dim=1))
                 
-                loss /= len(self.data.data_loading())
-                accuracy /= len(self.data.data_loading())
+            loss /= len(self.data.data_loading())
+            accuracy /= len(self.data.data_loading())
                 
         return {"MOdel_name = " :self.model.__class__.__name__,"model_ NAme" :loss.item(),
                 "model_accuracy":accuracy}
@@ -254,9 +289,10 @@ trail_x = Trainer(model=Model_image(input_shape=3*32*32,
                   
                   data= Data_prepare(batch_size=32),
                   
-                  traning_epoch=1)
+                  traning_epoch=10
+                  )
 
 print(trail_x.eval_model())
 
 print(torch.cuda.is_available())
-print(torch.version.cuda )
+print(torch.version.cuda)
