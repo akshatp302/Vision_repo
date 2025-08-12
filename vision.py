@@ -11,28 +11,95 @@ from tqdm import tqdm
 
 
 class Model_image(nn.Module):
-    def __init__(self,input_shape:int,
-                    hidden_shape:int,
-                    output_shape:int):
+    # def __init__(self,input_shape:int,
+    #                 hidden_shape_1:int,
+    #                 hidden_shape_2:int,
+    #                 hidden_shape_3:int,
+    #                 output_shape:int):
+    def __init__(self):
+ 
         super().__init__()
         
         
-        self.flattern = nn.Flatten()
+        # flattern = nn.Flatten()
         
-        self.Linear_1 = nn.Linear(in_features=input_shape,
-                                  out_features= hidden_shape)
-        non_linear_1 = nn.ReLU()
+        # Linear_1 = nn.Linear(in_features=input_shape,
+        #                           out_features= hidden_shape_1)
+        # non_linear_1 = nn.ReLU()
+        # # dropout_1 = nn.Dropout(p=0.2)
         
-        self.Linear_2 = nn.Linear(in_features=hidden_shape,
-                                  out_features=output_shape
-                                  )
+        
+        # Linear_2 = nn.Linear(in_features=hidden_shape_1,
+        #                           out_features=hidden_shape_2
+        #                           )
         # non_linear_2 = nn.ReLU()
         
-        self.model = nn.Sequential(self.flattern,
-                                   self.Linear_1,
-                                   non_linear_1,
-                                   self.Linear_2)
         
+        # Linear_3 = nn.Linear(in_features=hidden_shape_2,
+        #                            out_features=hidden_shape_3)
+        # non_linear_3 = nn.ReLU()
+        
+        
+        # Linear_4 = nn.Linear(in_features=hidden_shape_3,
+        #                            out_features=output_shape)
+        
+        # conv_1 = nn.Conv2d()
+      
+
+        # self.model = nn.Sequential(flattern,
+        #                            Linear_1,
+        #                            non_linear_1,
+        #                         #    dropout_1,
+                                   
+        #                            Linear_2,
+        #                            non_linear_2,
+                                   
+        #                            Linear_3,
+        #                            non_linear_3,
+
+        #                            Linear_4
+        #                            )
+
+        self.model = nn.Sequential(
+        
+        nn.Conv2d(in_channels=3, out_channels=64,
+                  kernel_size=3,
+                  stride=1,
+                  padding=1,
+                  ),
+
+        nn.ReLU(),
+        
+        nn.MaxPool2d(kernel_size=5,
+                     stride=1),
+
+        nn.Conv2d(in_channels=64,out_channels=128,
+                  kernel_size=1,
+                  stride=1,
+                  padding=0),
+        
+        
+        nn.MaxPool2d(2, 2),
+        
+        nn.ReLU(),
+        
+        nn.Flatten(),
+        
+        nn.Linear(in_features=14*14*128,out_features=1800),
+        
+        nn.ReLU(),
+        
+        nn.Linear(in_features=1800,out_features=200),
+
+        nn.ReLU(),
+
+        nn.Linear(in_features=200,out_features=10)
+
+
+    )
+
+
+
     def forward (self,x):
         return self.model(x)
     
@@ -105,7 +172,7 @@ class Trainer:
         
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(params=self.model.parameters(),
-                                          lr=0.01)
+                                          lr=1e-3)
        
         self.traning_epoch = traning_epoch
         
@@ -135,7 +202,11 @@ class Trainer:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.tight_layout()
-        plt.show()
+        # plt.savefig("Loss_curve.png")
+        plt.savefig(f"loss_curve_epoch_{self.traning_epoch}.png", dpi=300)
+
+        # plt.show()
+        plt.close() 
     
     
     
@@ -160,6 +231,7 @@ class Trainer:
                 
                 Actual_data_X_train = Actual_data_X_train.to(self.device,non_blocking=True)
                 Actual_label_Y_train = Actual_label_Y_train.to(self.device,non_blocking=True)
+            
                 
                 traning_model_prediction_Y = self.model(Actual_data_X_train)
                 
@@ -174,12 +246,13 @@ class Trainer:
                 if batch % 100 ==0:
                     print(f"Looked at {batch*len(Actual_data_X_train)}/{len(traning_batch_loaded)} samples ")
 
-                    print(f"{train_loss:.2f} at batch {batch}")  
+                print(f"{train_loss:.2f} at batch {batch}")  
                     
             self.train_loss_storage.append(train_loss.item())
 
             self.train_loss = initial_loss/len(traning_batch_loaded)
             # self.train_loss /= len(traning_batch_loaded)
+      
             
             
             
@@ -283,16 +356,22 @@ class Trainer:
     
     
 
-trail_x = Trainer(model=Model_image(input_shape=3*32*32,
-                                    hidden_shape=20,
-                                    output_shape=10),
+# trail_x = Trainer(model=Model_image(input_shape=3*32*32,
+#                                     hidden_shape_1=1200,
+#                                     hidden_shape_2=300,
+#                                     hidden_shape_3=40,
+#                                     output_shape=10),
                   
-                  data= Data_prepare(batch_size=32),
+#                   data= Data_prepare(batch_size=64),
                   
-                  traning_epoch=10
-                  )
+#                   traning_epoch=15
+#                   )
 
-print(trail_x.eval_model())
 
-print(torch.cuda.is_available())
-print(torch.version.cuda)
+trail_y = Trainer(model=Model_image(),
+                  data=Data_prepare(batch_size=64),
+                  traning_epoch=20)
+# print(trail_x.eval_model())
+
+# print(torch.cuda.is_available())
+# print(torch.version.cuda)
