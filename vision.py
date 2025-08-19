@@ -26,7 +26,8 @@ class Model_image(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2,stride=1),
             )
-
+     
+        
         conv_2 = nn.Sequential(
             nn.Conv2d(in_channels=32,
                       out_channels=64,
@@ -50,12 +51,16 @@ class Model_image(nn.Module):
         flatern = nn.Flatten()
         Linear_1 = nn.Linear(in_features=128*7*7,out_features=1200)
         non_linear_1 = nn.ReLU()
+        dropout_1 = nn.Dropout(p=0.4)
         
         Linear_2 = nn.Linear(in_features=1200,out_features=300) 
         non_linear_2 = nn.ReLU()    
+        dropout_2 = nn.Dropout(p=0.2)
+        
         
         Linear_3 = nn.Linear(in_features=300,out_features=40)
         non_linear_3 = nn.ReLU()    
+        dropout_3 = nn.Dropout(p=0.1)
         
         Linear_4 = nn.Linear(in_features=40,out_features=10)                
         
@@ -66,10 +71,13 @@ class Model_image(nn.Module):
             flatern,
             Linear_1,
             non_linear_1,
+            dropout_1,
             Linear_2,
             non_linear_2,
+            dropout_2,
             Linear_3,
             non_linear_3,
+            dropout_3,
             Linear_4
         )
       
@@ -173,7 +181,7 @@ class Trainer:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.tight_layout()
-        # plt.savefig(f"loss_curve_epoch_{self.traning_epoch}.png", dpi=300)
+        plt.savefig(f"loss_curve_epoch_{self.traning_epoch}.png", dpi=300)
 
         plt.show()
         # plt.close() 
@@ -335,9 +343,9 @@ class Trainer:
 
 # trail_y = Trainer(model=Model_image(),
 #                   data=Data_prepare(batch_size=64),
-#                   traning_epoch=4)
+#                   traning_epoch=30)
 # print(trail_y.eval_model())
-# print(trail_x.eval_model())
+
 
 # print(torch.cuda.is_available())
 # print(torch.version.cuda)
@@ -350,9 +358,9 @@ trail_z.load_state_dict(params)
 trail_z.eval()
 
 
-torch.random.manual_seed(42)
+# torch.random.manual_seed(42)
 
-data_prep = Data_prepare(batch_size=64)
+data_prep = Data_prepare(batch_size=32)
 _, test_batch_loaded = data_prep.data_loading()
 
 classes_names = data_prep.test_download.classes
@@ -366,16 +374,17 @@ with torch.inference_mode():
     
  
 plt.figure(figsize=(12, 5))
-for i in range(15):
+for i in range(20):
     img = image[i].cpu().permute(1, 2, 0)   # CHW -> HWC for plotting
     true_label = classes_names[label[i].item()]
     pred_label = classes_names[predictions[i].item()]
     conf = probability[i][predictions[i]].item()
 
-    plt.subplot(3, 5, i + 1)
+    plt.subplot(4, 5, i + 1)
     plt.imshow(img)
     plt.axis("off")
     plt.title(f"Pred: {pred_label}\nTrue: {true_label}\n({conf*100:.1f}%)", fontsize=9)
+    plt.savefig(f"predictions_epoch_{30}.png", dpi=300)
 
 plt.tight_layout()
 plt.show()
