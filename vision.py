@@ -11,96 +11,71 @@ from tqdm import tqdm
 
 
 class Model_image(nn.Module):
-    # def __init__(self,input_shape:int,
-    #                 hidden_shape_1:int,
-    #                 hidden_shape_2:int,
-    #                 hidden_shape_3:int,
-    #                 output_shape:int):
+  
     def __init__(self):
  
         super().__init__()
         
         
-        # flattern = nn.Flatten()
+        self.conv_1 = nn.Sequential(
+            nn.Conv2d(in_channels=3,out_channels=32,
+                      kernel_size=3,
+                      stride=1,
+                      padding=1),
+
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2,stride=1),
+            )
+
+        conv_2 = nn.Sequential(
+            nn.Conv2d(in_channels=32,
+                      out_channels=64,
+                      stride=1,
+                      kernel_size=2,
+                      padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2,stride=2)
+        )
         
-        # Linear_1 = nn.Linear(in_features=input_shape,
-        #                           out_features= hidden_shape_1)
-        # non_linear_1 = nn.ReLU()
-        # # dropout_1 = nn.Dropout(p=0.2)
+        conv_3 = nn.Sequential(
+            nn.Conv2d(in_channels=64,
+                      out_channels=128,
+                      stride=1,
+                      kernel_size=2,
+                      padding=0),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2,stride=2)
+        )
         
+        flatern = nn.Flatten()
+        Linear_1 = nn.Linear(in_features=128*7*7,out_features=1200)
+        non_linear_1 = nn.ReLU()
         
-        # Linear_2 = nn.Linear(in_features=hidden_shape_1,
-        #                           out_features=hidden_shape_2
-        #                           )
-        # non_linear_2 = nn.ReLU()
+        Linear_2 = nn.Linear(in_features=1200,out_features=300) 
+        non_linear_2 = nn.ReLU()    
         
+        Linear_3 = nn.Linear(in_features=300,out_features=40)
+        non_linear_3 = nn.ReLU()    
         
-        # Linear_3 = nn.Linear(in_features=hidden_shape_2,
-        #                            out_features=hidden_shape_3)
-        # non_linear_3 = nn.ReLU()
+        Linear_4 = nn.Linear(in_features=40,out_features=10)                
         
-        
-        # Linear_4 = nn.Linear(in_features=hidden_shape_3,
-        #                            out_features=output_shape)
-        
-        # conv_1 = nn.Conv2d()
+        self.model = nn.Sequential(
+            self.conv_1,
+            conv_2,
+            conv_3,
+            flatern,
+            Linear_1,
+            non_linear_1,
+            Linear_2,
+            non_linear_2,
+            Linear_3,
+            non_linear_3,
+            Linear_4
+        )
       
 
-        # self.model = nn.Sequential(flattern,
-        #                            Linear_1,
-        #                            non_linear_1,
-        #                         #    dropout_1,
-                                   
-        #                            Linear_2,
-        #                            non_linear_2,
-                                   
-        #                            Linear_3,
-        #                            non_linear_3,
-
-        #                            Linear_4
-        #                            )
-
-        self.model = nn.Sequential(
-        
-        nn.Conv2d(in_channels=3, out_channels=64,
-                  kernel_size=3,
-                  stride=1,
-                  padding=1,
-                  ),
-
-        nn.ReLU(),
-        
-        nn.MaxPool2d(kernel_size=5,
-                     stride=1),
-
-        nn.Conv2d(in_channels=64,out_channels=128,
-                  kernel_size=1,
-                  stride=1,
-                  padding=0),
-        
-        
-        nn.MaxPool2d(2, 2),
-        
-        nn.ReLU(),
-        
-        nn.Flatten(),
-        
-        nn.Linear(in_features=14*14*128,out_features=1800),
-        
-        nn.ReLU(),
-        
-        nn.Linear(in_features=1800,out_features=200),
-
-        nn.ReLU(),
-
-        nn.Linear(in_features=200,out_features=10)
-
-
-    )
-
-
-
     def forward (self,x):
+    
         return self.model(x)
     
     
@@ -124,8 +99,9 @@ class Data_prepare():
                                               transform=ToTensor(),
                                               download=True,
                                               target_transform=None)
-        
-        
+       
+
+
     def data_loading(self):
         
         
@@ -181,13 +157,8 @@ class Trainer:
         
         self.traning_loop()
         self.evulation()
-        # self.accuracy_check()
-    
-       
-    # def progress_bar(self):
-    #     for i in tqdm(range(self.epoch)):
-    #         print(i)
-       
+     
+
        
     def accuracy_check(self,Y_labels,Model_output):
         # def accuracy_check(self,Y_labels,Model_output):
@@ -202,11 +173,10 @@ class Trainer:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.tight_layout()
-        # plt.savefig("Loss_curve.png")
-        plt.savefig(f"loss_curve_epoch_{self.traning_epoch}.png", dpi=300)
+        # plt.savefig(f"loss_curve_epoch_{self.traning_epoch}.png", dpi=300)
 
-        # plt.show()
-        plt.close() 
+        plt.show()
+        # plt.close() 
     
     
     
@@ -246,16 +216,16 @@ class Trainer:
                 if batch % 100 ==0:
                     print(f"Looked at {batch*len(Actual_data_X_train)}/{len(traning_batch_loaded)} samples ")
 
-                print(f"{train_loss:.2f} at batch {batch}")  
-                    
+            print(f"{train_loss:.2f} at batch {batch}")
+
             self.train_loss_storage.append(train_loss.item())
 
             self.train_loss = initial_loss/len(traning_batch_loaded)
             # self.train_loss /= len(traning_batch_loaded)
-      
             
-            
-            
+        torch.save(self.model.state_dict(),f"Cifar_10.pth")
+        print("Model_params saved successfully.")
+
         self.traning_time_stop = timer()
         
     
@@ -299,7 +269,7 @@ class Trainer:
             
         
         self.test_time_stop = timer()
-    
+
         print(f"Train loss:{self.train_loss:.3f} | Test loss :{ self.test_loss:.2f} and | Test_accuracy {self.test_accuracy} at epoch {self.traning_epoch:.2f}  ")
 
         timing_print_train = self.timing(start_time=self.traning_time_start,
@@ -309,10 +279,14 @@ class Trainer:
                                         end_time = self.test_time_stop)
         
         print(f"The model time during traning {timing_print_train} and model time for evulation {timing_print_test}")
+       
 
 
         epoch_graph = list(range(1,self.traning_epoch+1))
         self.curves(x_axis=epoch_graph,y_axis=self.train_loss_storage,x_label="Epochs",y_label="Train Loss")
+
+    def new_method(self):
+        print(self.shape_check.shape)
 
 
     # @staticmethod
@@ -349,29 +323,60 @@ class Trainer:
         return {"MOdel_name = " :self.model.__class__.__name__,"model_ NAme" :loss.item(),
                 "model_accuracy":accuracy}
             
-        
+            
+
     
     
     
     
     
 
-# trail_x = Trainer(model=Model_image(input_shape=3*32*32,
-#                                     hidden_shape_1=1200,
-#                                     hidden_shape_2=300,
-#                                     hidden_shape_3=40,
-#                                     output_shape=10),
-                  
-#                   data= Data_prepare(batch_size=64),
-                  
-#                   traning_epoch=15
-#                   )
 
 
-trail_y = Trainer(model=Model_image(),
-                  data=Data_prepare(batch_size=64),
-                  traning_epoch=20)
+# trail_y = Trainer(model=Model_image(),
+#                   data=Data_prepare(batch_size=64),
+#                   traning_epoch=4)
+# print(trail_y.eval_model())
 # print(trail_x.eval_model())
 
 # print(torch.cuda.is_available())
 # print(torch.version.cuda)
+
+
+
+params = torch.load("Cifar_10.pth",weights_only=True)
+trail_z = Model_image() 
+trail_z.load_state_dict(params)
+trail_z.eval()
+
+
+torch.random.manual_seed(42)
+
+data_prep = Data_prepare(batch_size=64)
+_, test_batch_loaded = data_prep.data_loading()
+
+classes_names = data_prep.test_download.classes
+image,label = next(iter(test_batch_loaded))
+image, label = image.to(trail_z.model[0][0].weight.device), label.to(trail_z.model[0][0].weight.device) 
+
+with torch.inference_mode():
+    raw_output = trail_z.model(image)
+    probability = raw_output.softmax(dim=1) 
+    predictions = probability.argmax(dim=1) 
+    
+ 
+plt.figure(figsize=(12, 5))
+for i in range(15):
+    img = image[i].cpu().permute(1, 2, 0)   # CHW -> HWC for plotting
+    true_label = classes_names[label[i].item()]
+    pred_label = classes_names[predictions[i].item()]
+    conf = probability[i][predictions[i]].item()
+
+    plt.subplot(3, 5, i + 1)
+    plt.imshow(img)
+    plt.axis("off")
+    plt.title(f"Pred: {pred_label}\nTrue: {true_label}\n({conf*100:.1f}%)", fontsize=9)
+
+plt.tight_layout()
+plt.show()
+print(classes_names)
