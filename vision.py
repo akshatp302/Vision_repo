@@ -8,6 +8,7 @@ from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt 
 from timeit import default_timer as timer 
 from tqdm import tqdm
+import argparse
 
 
 class Model_image(nn.Module):
@@ -17,7 +18,7 @@ class Model_image(nn.Module):
         super().__init__()
         
         
-        self.conv_1 = nn.Sequential(
+        conv_1 = nn.Sequential(
             nn.Conv2d(in_channels=3,out_channels=32,
                       kernel_size=3,
                       stride=1,
@@ -65,7 +66,7 @@ class Model_image(nn.Module):
         Linear_4 = nn.Linear(in_features=40,out_features=10)                
         
         self.model = nn.Sequential(
-            self.conv_1,
+            conv_1,
             conv_2,
             conv_3,
             flatern,
@@ -191,7 +192,7 @@ class Trainer:
     def traning_loop(self):
 
         self.train_loss_storage = []
-        # to_numpy  = ToTensor.to_numpy
+        
 
         torch.manual_seed(42)
         # self.train_loss = 0
@@ -230,6 +231,8 @@ class Trainer:
 
             self.train_loss = initial_loss/len(traning_batch_loaded)
             # self.train_loss /= len(traning_batch_loaded)
+            
+            # print(f"Train_loss at each batch:{self.train_loss:.2f}")
             
         torch.save(self.model.state_dict(),f"Cifar_10.pth")
         print("Model_params saved successfully.")
@@ -309,7 +312,7 @@ class Trainer:
         loss = 0
         accuracy =0
         
-        # _test_data_loaded = self.data.data_loading()
+    
         _,test_batch_loaded = self.data.data_loading()
         
         self.model.eval()
@@ -342,8 +345,8 @@ class Trainer:
 
 
 # trail_y = Trainer(model=Model_image(),
-#                   data=Data_prepare(batch_size=64),
-#                   traning_epoch=30)
+#                   data=Data_prepare(batch_size=32),
+#                   traning_epoch=300)
 # print(trail_y.eval_model())
 
 
@@ -358,19 +361,19 @@ trail_z.load_state_dict(params)
 trail_z.eval()
 
 
-# torch.random.manual_seed(42)
-
 data_prep = Data_prepare(batch_size=32)
 _, test_batch_loaded = data_prep.data_loading()
 
 classes_names = data_prep.test_download.classes
 image,label = next(iter(test_batch_loaded))
-image, label = image.to(trail_z.model[0][0].weight.device), label.to(trail_z.model[0][0].weight.device) 
+image, label = image.to(trail_z.model[0][0].weight.device), label.to(trail_z.model[0][0].weight.device)  
 
 with torch.inference_mode():
     raw_output = trail_z.model(image)
     probability = raw_output.softmax(dim=1) 
+    # print(probability)
     predictions = probability.argmax(dim=1) 
+    # print(predictions)
     
  
 plt.figure(figsize=(12, 5))
@@ -382,10 +385,41 @@ for i in range(20):
 
     plt.subplot(4, 5, i + 1)
     plt.imshow(img)
-    plt.axis("off")
+    plt.axis("off") 
     plt.title(f"Pred: {pred_label}\nTrue: {true_label}\n({conf*100:.1f}%)", fontsize=9)
-    plt.savefig(f"predictions_epoch_{30}.png", dpi=300)
+    plt.savefig(f"predictions_epoch_{300}.png", dpi=300)
 
 plt.tight_layout()
+# plt.legend(loc='upper right', fontsize=10)
 plt.show()
 print(classes_names)
+
+
+
+# if __name__ == "main":
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--mode",choices=["train","eval"],default="eval")
+#     parser.add_argument("--epochs")
+#     parser.add_argument("--batch_size")
+#     parser.add_argument("--param_files",default="Cifar_10.pth")
+#     parser.add_argument("--vizulization",default=20)
+#     args = parser.parse_args()
+
+#     data_prepz = Data_prepare(batch_size=args.batch_size)
+    
+#     if args.mode == "train":
+#         Trainer(model=Model_image(),
+#                 data=data_prepz,
+#                 traning_epoch=args.epochs)
+        
+#     else:
+        
+        
+        
+        
+    
+    
+        
+    
+    
+   
